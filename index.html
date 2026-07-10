@@ -777,9 +777,37 @@
     </div>
     <div class="obody">
       <div class="pt-big"><span>&#9728;</span><span id="pt-balance">0</span><span class="ptu">pt</span></div>
-      <div class="fd-desc">ゲームで貯めたポイントは、チケットのお支払い画面で「ポイントで値引きする」を選ぶと、1pt＝1円でその場で引かれます。</div>
-      <button class="ogo" style="width:100%;" onclick="showView('tickets')">チケット購入で使う</button>
+      <div class="fd-desc">ゲームで貯めたポイントは、チケットのオンライン購入時の値引き（1pt＝1円）や、キッチンカーでのドリンク交換（100pt）に使えます。</div>
+      <button class="ogo" style="width:100%;" onclick="showView('tickets')">チケット購入に使う</button>
+      <button class="ogo" style="width:100%;margin-top:10px;" onclick="openKitchenPt()">キッチンカーで使う</button>
+      <div class="gnote dotf" style="margin-top:10px;">チケットの値引きはオンライン購入のみ。お支払い画面で「ポイントで値引きする」を選ぶと、使ったぶんのポイントはその場で減ります。</div>
       <button class="fac-btn" style="margin-top:12px;" onclick="showView('games')"><div><div class="fn">ゲームで貯める</div><div class="fs">4つのクエストでポイント獲得</div></div><span style="color:var(--sunset-3);font-size:20px;">&#8250;</span></button>
+    </div>
+  </div>
+
+  <div class="view" id="v-kitchenpt" style="padding-bottom:30px;">
+    <div class="ohead">
+      <button class="back" onclick="showView('points')" aria-label="戻る">&#8249;</button>
+      <div class="k">KITCHEN CAR</div>
+      <div class="t">キッチンカーで使う</div>
+      <div class="tag">100ポイントでドリンク1本と交換できます</div>
+    </div>
+    <div class="obody">
+      <div class="pt-big"><span>&#9728;</span><span id="kp-pt">0</span><span class="ptu">pt</span></div>
+      <div id="kp-step1">
+        <div class="fd-desc">100ポイントで、キッチンカーのドリンク1本と交換できます。交換後に「チケットを発行」を押すと、ドリンク無料チケットが発行されます。</div>
+        <button class="ogo" style="width:100%;" id="kp-ex-btn" onclick="kpExchange()">ドリンクと交換する（100pt）</button>
+        <div class="gnote dotf" id="kp-short" style="display:none;margin-top:10px;">ポイントが足りません（100pt 必要です）。ゲームで貯めてから、また来てね。</div>
+      </div>
+      <div id="kp-step2" style="display:none;">
+        <div class="fd-desc" style="font-size:17px;font-weight:bold;text-align:center;">おめでとう&#127881;100ポイント消費でジュースをプレゼント&#10024;</div>
+        <button class="ogo" style="width:100%;" onclick="kpIssue()">チケットを発行</button>
+        <div class="gnote dotf" style="margin-top:10px;">「チケットを発行」を押すと100ポイントが引かれ、ドリンク無料チケット（有効期限：発券から1カ月）が発行されます。</div>
+      </div>
+      <div id="kp-step3" style="display:none;">
+        <div class="fd-desc" style="font-size:16px;font-weight:bold;text-align:center;">チケットはTOPのチケットボタンで表示できるよ</div>
+        <button class="fac-btn" style="margin-top:12px;" onclick="showView('mytickets')"><div><div class="fn">&#127903; チケットを見る</div><div class="fs">ドリンク無料チケットが入っています</div></div><span style="color:var(--sunset-3);font-size:20px;">&#8250;</span></button>
+      </div>
     </div>
   </div>
 
@@ -1228,10 +1256,13 @@ function renderMyTk(){
  if(!myTickets.length){h.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px 0;">購入済みのチケットはありません</div>';return;}
  myTickets.forEach(function(t){
   var c=document.createElement('div');c.className='tkc';
+  var expired=t.drink&&t.exp&&Date.now()>t.exp;
   c.innerHTML='<div class="th"><span class="fn">'+t.title+'</span><span class="no">'+t.no+'</span></div>'+
-   '<div class="tb"><div class="ln">'+t.lines+'</div><div class="perf2"></div>'+
-   '<div class="ft"><span class="pd">'+(t.coupon?'獲得日 ':'購入日 ')+t.at+'</span>'+(t.coupon?'<span class="tt" style="font-size:15px;color:#C9451F;">ゲーム特典</span>':'<span class="tt">'+tmoney(t.total)+'</span>')+'</div>'+
-   '<div class="show-note">'+(t.coupon?'ご利用時に':'入場時に')+'、この画面を係員にご提示ください</div></div>';
+   '<div class="tb"><div class="ln">'+t.lines+(expired?'<br><b style="color:#C9451F;">※ 有効期限切れです</b>':'')+'</div><div class="perf2"></div>'+
+   '<div class="ft"><span class="pd">'+(t.drink?'発券日時 ':t.coupon?'獲得日 ':'購入日 ')+t.at+'</span>'+(t.drink?'<span class="tt" style="font-size:15px;color:#C9451F;">100pt交換</span>':t.coupon?'<span class="tt" style="font-size:15px;color:#C9451F;">ゲーム特典</span>':'<span class="tt">'+tmoney(t.total)+'</span>')+'</div>'+
+   '<div class="show-note">'+(t.coupon?'ご利用時に':'入場時に')+'、この画面を係員にご提示ください</div>'+
+   (t.drink?'<button class="ogo" style="width:100%;margin-top:10px;background:#3a2600;color:#F5C94A;" onclick="delDrinkTk('+t.tid+')">使用済みにして削除する</button>':'')+
+   '</div>';
   h.appendChild(c);
  });
 }
@@ -1241,10 +1272,34 @@ loadTk();updateMytkBtn();
 var userPt=0,ckBase=0,ckUse=0,q100=false,ckFrom='tickets';
 function savePt(){try{localStorage.setItem('sb_pt',String(userPt));}catch(e){}}
 function loadPt(){try{var v=localStorage.getItem('sb_pt');if(v!==null)userPt=parseInt(v)||0;}catch(e){}}
-function updatePtBadge(){var t=userPt.toLocaleString('ja-JP');var b=document.getElementById('top-pt');if(b)b.textContent=t;var h=document.getElementById('have-pt');if(h)h.textContent=t;var pb=document.getElementById('pt-balance');if(pb)pb.textContent=t;}
+function updatePtBadge(){var t=userPt.toLocaleString('ja-JP');var b=document.getElementById('top-pt');if(b)b.textContent=t;var h=document.getElementById('have-pt');if(h)h.textContent=t;var pb=document.getElementById('pt-balance');if(pb)pb.textContent=t;var kp=document.getElementById('kp-pt');if(kp)kp.textContent=t;}
 function addPt(n){userPt+=n;if(userPt<0)userPt=0;savePt();updatePtBadge();}
 function applyPt(){var chk=document.getElementById('use-pt');ckUse=(chk&&chk.checked)?Math.min(userPt,ckBase):0;var ap=document.getElementById('pt-applied');if(ap)ap.textContent=ckUse>0?('ポイント値引き −'+tmoney(ckUse)):'';var t=document.getElementById('ck-total');if(t)t.textContent=tmoney(ckBase-ckUse);}
 loadPt();updatePtBadge();
+
+/* KITCHEN CAR - 100pt DRINK EXCHANGE */
+var kpExchanged=false;
+function kpShow(step){['kp-step1','kp-step2','kp-step3'].forEach(function(id,i){var e=document.getElementById(id);if(e)e.style.display=(i===step-1)?'block':'none';});}
+function openKitchenPt(){kpExchanged=false;kpShow(1);var ex=document.getElementById('kp-ex-btn');var sh=document.getElementById('kp-short');var ok=userPt>=100;if(ex)ex.disabled=!ok;if(sh)sh.style.display=ok?'none':'block';updatePtBadge();showView('kitchenpt');}
+function kpExchange(){if(userPt<100){flash('ポイントが足りません（100pt 必要です）');return;}kpExchanged=true;coinSound();kpShow(2);}
+function kpFmt(d){return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function kpIssue(){
+ if(!kpExchanged)return;
+ if(userPt<100){flash('ポイントが足りません（100pt 必要です）');kpShow(1);return;}
+ kpExchanged=false;
+ var now=new Date();var exp=new Date(now.getTime());exp.setMonth(exp.getMonth()+1);
+ addPt(-100);
+ myTickets.unshift({no:'DK-'+(1000+Math.floor(Math.random()*9000)),tid:Date.now(),title:'ドリンク無料チケット',lines:'キッチンカーのドリンク1本と無料交換<br>発券日時　'+kpFmt(now)+'<br>有効期限　'+kpFmt(exp)+' まで（発券から1カ月）',total:0,at:kpFmt(now),exp:exp.getTime(),coupon:true,drink:true});
+ saveTk();updateMytkBtn();
+ kpShow(3);
+ flash('ドリンク無料チケットを発行しました（−100pt）');
+}
+function delDrinkTk(tid){
+ if(!confirm('このドリンク無料チケットを使用済みにして削除しますか？'))return;
+ myTickets=myTickets.filter(function(t){return t.tid!==tid;});
+ saveTk();updateMytkBtn();renderMyTk();
+ flash('ご利用ありがとうございました。チケットを削除しました');
+}
 
 /* AD BANNER */
 var ADS=[
